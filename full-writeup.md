@@ -108,7 +108,9 @@ curl for all HTTP interactions
 
 base64 for decoding the response
 
-Manual query crafting (no fancy client needed)
+Manual query crafting
+
+Logical exploitation & metadata awareness
 
 ---
 
